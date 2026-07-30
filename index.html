@@ -693,17 +693,28 @@
   modalReg.show();
 }
     // ==================== KATALOG FUNCTIONS ====================
-    function muatDaftarBarang() {
-      google.script.run
-        .withSuccessHandler(data => { 
-          semuaBarang = data; 
-          tampilkanKatalog(data); 
-        })
-        .withFailureHandler(err => { 
-          document.getElementById('katalog').innerHTML = `<div class="alert alert-danger">${err.message}</div>`; 
-        })
-        .getDaftarBarang();
-    }
+   function muatDaftarBarang() {
+  // Jalur khusus mengambil data barang secara transparan dari luar Google Sites
+  const urlAmbilData = "https://google.com";
+
+  fetch(urlAmbilData)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error("Gagal merespon data dari server Google Sheets.");
+      }
+      return response.json();
+    })
+    .then(data => {
+      // Menyimpan data ke variabel global Anda agar fitur pencarian/fitur lain tetap berfungsi
+      semuaBarang = data; 
+      // Otomatis merender tampilan kartu-kartu barang koperasi Anda
+      tampilkanKatalog(data); 
+    })
+    .catch(err => { 
+      document.getElementById('katalog').innerHTML = `<div class="alert alert-danger">${err.message}</div>`; 
+    });
+}
+
 
     function tampilkanKatalog(barang) {
       let html = '';
