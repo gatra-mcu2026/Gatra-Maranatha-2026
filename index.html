@@ -5,7 +5,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Koperasi Digital Pro</title>
-
     <!-- JEMBATAN OTOMATIS GOOGLE SCRIPT RUN KE GITHUB (VERSI FINAL BEBAS CORS) -->
   <script>
   // ⚠️ Masukkan URL Web App Apps Script Anda di sini (yang berakhiran /exec)
@@ -29,7 +28,6 @@
         return runner;
       }
     };
-
     return new Proxy(runner, {
       get: function(target, prop) {
         if (prop === 'withSuccessHandler') return target.withSuccessHandler;
