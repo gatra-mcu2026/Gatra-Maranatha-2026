@@ -8,52 +8,60 @@
 
     <!-- JEMBATAN OTOMATIS GOOGLE SCRIPT RUN KE GITHUB (VERSI FINAL BEBAS CORS) -->
   <script>
-    const URL_APPS_SCRIPT_PRO = "https://google.com"; 
+  // ⚠️ Masukkan URL Web App Apps Script Anda di sini (yang berakhiran /exec)
+  const URL_APPS_SCRIPT_PRO = "https://script.google.com/macros/s/AKfycbx...AKSEN_URL_ASLI_ANDA.../exec"; 
 
-    window.google = {
-      script: {
-        run: {
-          successHandler: null,
-          withSuccessHandler: function(handler) {
-            this.successHandler = handler;
-            return this;
-          }
-        }
+  window.google = window.google || {};
+  window.google.script = window.google.script || {};
+
+  // Polyfill Proxy untuk menggantikan google.script.run
+  window.google.script.run = (function() {
+    let successCallback = null;
+    let failureCallback = null;
+
+    const runner = {
+      withSuccessHandler: function(handler) {
+        successCallback = handler;
+        return runner;
+      },
+      withFailureHandler: function(handler) {
+        failureCallback = handler;
+        return runner;
       }
     };
 
-    window.google.script.run = new Proxy(window.google.script.run, {
+    return new Proxy(runner, {
       get: function(target, prop) {
         if (prop === 'withSuccessHandler') return target.withSuccessHandler;
+        if (prop === 'withFailureHandler') return target.withFailureHandler;
+
         return function(...args) {
-          const handler = target.successHandler;
-          
-          // Memakai FormData & no-cors agar lolos dari blokir Pre-flight OPTIONS browser
-          const formPayload = new FormData();
-          formPayload.append("requestRaw", JSON.stringify({
+          const payload = {
             namaFungsi: prop,
             parameter: args
-          }));
+          };
 
           fetch(URL_APPS_SCRIPT_PRO, {
             method: "POST",
-            mode: "no-cors", // Menjamin data verifikasi login lolos masuk ke Google Sheets
-            body: formPayload
+            redirect: "follow",
+            headers: {
+              "Content-Type": "text/plain;charset=utf-8"
+            },
+            body: JSON.stringify(payload)
           })
-          .then(() => {
-            // Karena mode no-cors, kita berikan instruksi bypass sukses ke sistem web Anda.
-            // PENTING: Untuk fungsi verifikasi login yang membutuhkan pengecekan password/PIN,
-            // Jika sistem login Anda mewajibkan pencocokan data balik instan, pastikan data PIN di Sheets sudah benar.
-            if (handler) {
-              handler({ status: "success", data: true }); 
-            }
+          .then(res => res.json())
+          .then(data => {
+            if (successCallback) successCallback(data);
           })
-          .catch(err => console.error("Koneksi bermasalah: ", err));
+          .catch(err => {
+            console.error("Error Fetch Apps Script:", err);
+            if (failureCallback) failureCallback(err);
+          });
         };
       }
     });
-  </script>
-
+  })();
+</script>
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   
