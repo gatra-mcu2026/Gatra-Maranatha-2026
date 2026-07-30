@@ -7,7 +7,7 @@
   <title>Koperasi Digital Pro</title>
 
   <!-- 1. JEMBATAN OTOMATIS (Taruh Paling Atas) -->
-  <script>
+ <script>
     const URL_APPS_SCRIPT_PRO = "https://google.com"; 
 
     window.google = {
@@ -27,16 +27,28 @@
         if (prop === 'withSuccessHandler') return target.withSuccessHandler;
         return function(...args) {
           const handler = target.successHandler;
+          
           fetch(URL_APPS_SCRIPT_PRO, {
             method: "POST",
-            mode: "no-cors", 
+            mode: "cors", // Menggunakan mode cors untuk membaca balikan teks login secara penuh
             headers: { "Content-Type": "text/plain" },
             body: JSON.stringify({ namaFungsi: prop, parameter: args })
           })
-          .then(() => {
-            if (handler) handler({status: "success"}); 
+          .then(response => response.text()) // Baca respon sebagai teks mentah terlebih dahulu
+          .then(textData => {
+            try {
+              const data = JSON.parse(textData); // Ubah teks menjadi objek JSON resmi
+              if (handler) {
+                // Teruskan hasil asli Sheets (seperti data login) ke fungsi sukses bawaan Anda
+                handler(data.hasil); 
+              }
+            } catch (e) {
+              console.error("Gagal membaca format data: ", e);
+            }
           })
-          .catch(err => console.error("Koneksi gagal: ", err));
+          .catch(err => {
+            console.error("Koneksi ke Google Sheets terputus: ", err);
+          });
         };
       }
     });
