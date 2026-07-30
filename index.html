@@ -8,10 +8,8 @@
   
   <!-- JEMBATAN OTOMATIS GOOGLE SCRIPT RUN KE GITHUB -->
   <script>
-    // URL Web App Apps Script asli Anda
-    const URL_APPS_SCRIPT_PRO = "https://script.google.com/macros/s/AKfycbxe5OzG2GUrrQOCgg-Zwg3ImkbssU5QJyKlEFAPxbLLTEMCiTBV-7KHXELWOr13cTFn/exec"; 
+    const URL_APPS_SCRIPT_PRO = "https://google.com"; 
 
-    // Membuat tiruan google.script.run agar kode lama Anda tidak eror
     window.google = {
       script: {
         run: {
@@ -24,33 +22,21 @@
       }
     };
 
-    // Mengaktifkan jembatan otomatis untuk menangkap fungsi seperti ambilKatalog(), simpanTransaksi(), dll.
     window.google.script.run = new Proxy(window.google.script.run, {
       get: function(target, prop) {
         if (prop === 'withSuccessHandler') return target.withSuccessHandler;
-        
         return function(...args) {
           const handler = target.successHandler;
-          
-          // Kirim data ke Apps Script menggunakan mode 'no-cors' agar lancar di GitHub
           fetch(URL_APPS_SCRIPT_PRO, {
             method: "POST",
             mode: "no-cors", 
             headers: { "Content-Type": "text/plain" },
-            body: JSON.stringify({
-              namaFungsi: prop,
-              parameter: args
-            })
+            body: JSON.stringify({ namaFungsi: prop, parameter: args })
           })
           .then(() => {
-            // Memanggil handler bawaan agar aplikasi web Anda mendeteksi bahwa proses selesai
-            if (handler) {
-              handler({status: "success"}); 
-            } else {
-              alert("Data berhasil diproses ke Google Sheets!");
-            }
+            if (handler) handler({status: "success"}); 
           })
-          .catch(err => alert("Koneksi internet terganggu: " + err));
+          .catch(err => console.error("Koneksi gagal: ", err));
         };
       }
     });
